@@ -61,6 +61,47 @@ def generate_deal_id(url: str) -> str:
     return hashlib.md5(url.encode("utf-8")).hexdigest()
 
 
+def is_real_deal(title: str, description: str = "") -> bool:
+    """
+    Filtra posts que são promoções reais.
+    Rejeita discussões, notícias, perguntas e reclamações.
+    Aceita apenas posts com preço ou palavras-chave de oferta.
+    """
+    text = (title + " " + description).lower()
+
+    # Rejeita se parecer pergunta ou discussão
+    reject_patterns = [
+        r"^\[dúvida\]", r"^\[ajuda\]", r"^\[pergunta\]",
+        r"^\[discussão\]", r"^\[notícia\]", r"^\[news\]",
+        r"alguém sabe", r"como faço", r"preciso de ajuda",
+        r"o que vocês", r"vale a pena\?", r"vocês recomendam",
+        r"restrito para ganhar", r"verificar data", r"código de rastreio",
+        r"dica de como vender", r"quem pretende vender",
+        r"impostos sendo cobrados", r"entrega pela",
+    ]
+    for pattern in reject_patterns:
+        if re.search(pattern, text, re.IGNORECASE):
+            return False
+
+    # Aceita se tiver preço explícito
+    if re.search(r"R\$\s*[\d.,]+", text):
+        return True
+
+    # Aceita se tiver palavras-chave de promoção
+    promo_keywords = [
+        "promoção", "desconto", "oferta", "cupom", "frete grátis",
+        "off", "barato", "sale", "deal", "promocode", "cashback",
+        "grátis", "brinde", "liquidação", "black friday", "menor preço",
+        "netshoes", "amazon", "shopee", "mercado livre", "magalu",
+        "americanas", "kabum", "ponto frio", "casas bahia",
+    ]
+    for keyword in promo_keywords:
+        if keyword in text:
+            return True
+
+    return False
+
+
 def extract_price(text: str) -> Optional[str]:
     """
     Tenta extrair o preço do título ou descrição.
@@ -135,6 +176,10 @@ async def fetch_feed(
 
             title = entry.get("title", "Sem título").strip()
             description = entry.get("summary", "")
+
+            # Filtra discussões, notícias e perguntas — só promoções reais
+            if not is_real_deal(title, description):
+                continue
 
             deal = {
                 "id": generate_deal_id(url),

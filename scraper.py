@@ -24,13 +24,13 @@ RSS_FEEDS = [
         "emoji": "💥",
     },
     {
-        "name": "r/MercadoLivre",
-        "url": "https://www.reddit.com/r/MercadoLivre/new.rss",
+        "name": "r/ofertasdobrasil",
+        "url": "https://www.reddit.com/r/ofertasdobrasil/new.rss",
         "emoji": "🛒",
     },
     {
-        "name": "r/brasil",
-        "url": "https://www.reddit.com/r/brasil/search.rss?q=promoção+desconto&sort=new&restrict_sr=1",
+        "name": "r/eu_opshopping",
+        "url": "https://www.reddit.com/r/eu_opshopping/new.rss",
         "emoji": "🎯",
     },
 ]

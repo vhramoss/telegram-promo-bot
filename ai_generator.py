@@ -44,19 +44,24 @@ def init_gemini():
 
 # ─── Prompt ───────────────────────────────────────────────────────────────────
 
-PROMPT_TEMPLATE = """Você é um especialista em copywriting para e-commerce brasileiro.
-Crie uma frase curta e chamativa para divulgar este produto em promoção no Telegram.
+PROMPT_TEMPLATE = """Você é um copywriter especialista em canais de promoções brasileiros no Telegram.
+Seu objetivo é criar frases que façam as pessoas clicarem AGORA.
 
-Produto: {title}
+Produto em promoção: {title}
 
-Regras obrigatórias:
-- Máximo 2 linhas curtas
-- Linguagem informal e animada (estilo "aproveita!", "não perde!")
-- Foque na oportunidade/urgência ou no benefício do produto
-- NÃO use emojis (o bot já adiciona os emojis)
-- Retorne APENAS a frase pronta, sem aspas, sem explicações
+Regras:
+- Máximo 2 linhas
+- Tom urgente e informal ("corre!", "só hoje!", "tá barato demais!")
+- Mencione o benefício principal ou a oportunidade de economia
+- NÃO use emojis (já são adicionados pelo bot)
+- Retorne APENAS a frase, sem aspas, sem explicações
 
-Exemplo de saída boa: Preço absurdo para um produto tão completo. Aproveita antes de acabar o estoque!"""
+Exemplos de saídas boas:
+- "Tá ridiculamente barato esse produto! Corre antes de acabar o estoque."
+- "Essa promoção não vai durar. Perfeito pra quem tava esperando baixar o preço."
+- "Melhor preço do ano nisso aqui. Aproveita enquanto tem!"
+
+Agora crie a frase para o produto acima:"""
 
 
 # ─── Geração de copy ───────────────────────────────────────────────────────────

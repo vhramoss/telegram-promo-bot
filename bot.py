@@ -55,32 +55,50 @@ bot_state = {
 def format_message(deal: dict, sales_copy: str = None) -> str:
     """
     Monta o texto do post no Telegram usando Markdown.
-    Se sales_copy for fornecida (gerada pelo Gemini), ela é incluída
-    logo abaixo do título como headline de vendas.
 
-    Exemplo de saída com IA:
-        🔥 *Notebook Dell por R$ 2.499*
+    Formato rico com headline de IA, preço, urgência e CTA:
 
-        Preço absurdo para um produto tão completo. Aproveita antes de acabar!
+        ━━━━━━━━━━━━━━━━━━━━
+        🔥 OFERTA IMPERDÍVEL
+        ━━━━━━━━━━━━━━━━━━━━
+
+        *Notebook Dell i5 16GB SSD 512GB*
+
+        _Preço absurdo pra um produto completo. Aproveita antes de acabar!_
 
         💰 R$ 2.499
-        🔗 Ver oferta
-        📌 Fonte: Pelando
-    """
-    emoji = deal.get("emoji", "🛍️")
-    lines = [f"{emoji} *{deal['title']}*", ""]
+        🛒 [COMPRAR AGORA](url)
 
-    # Headline gerada pela IA (opcional)
+        📌 Fonte: r/PromocoesOnline
+        ⚡ @cacapromocoesbr
+    """
+    emoji = deal.get("emoji", "🔥")
+    channel = TELEGRAM_CHANNEL or "@cacapromocoesbr"
+
+    lines = [
+        "━━━━━━━━━━━━━━━━━━━━",
+        f"{emoji} *OFERTA IMPERDÍVEL*",
+        "━━━━━━━━━━━━━━━━━━━━",
+        "",
+        f"*{deal['title']}*",
+        "",
+    ]
+
+    # Headline gerada pela IA — destaque em itálico
     if sales_copy:
         lines += [f"_{sales_copy}_", ""]
 
+    # Preço em destaque
     if deal.get("price"):
-        lines += [f"💰 {deal['price']}", ""]
+        lines += [f"💰 *{deal['price']}*", ""]
 
     lines += [
-        f"🔗 [Ver oferta]({deal['url']})",
+        f"🛒 [COMPRAR AGORA]({deal['url']})",
+        "",
         f"📌 Fonte: {deal['source']}",
+        f"⚡ {channel}",
     ]
+
     return "\n".join(lines)
 
 

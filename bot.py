@@ -201,7 +201,7 @@ async def check_and_post_deals():
 
     finally:
         # Atualiza horário da próxima verificação
-        bot_state["next_check"] = datetime.now() + timedelta(
+        bot_state["next_check"] = datetime.utcnow() + timedelta(
             minutes=CHECK_INTERVAL_MINUTES
         )
 
@@ -301,7 +301,7 @@ async def main():
     # Atualiza estado global
     bot_state["running"] = True
     bot_state["started_at"] = datetime.now()
-    bot_state["next_check"] = datetime.now() + timedelta(minutes=CHECK_INTERVAL_MINUTES)
+    bot_state["next_check"] = datetime.utcnow() + timedelta(minutes=CHECK_INTERVAL_MINUTES)
 
     logger.info(f"🤖 Bot rodando! Canal: {TELEGRAM_CHANNEL} | Intervalo: {CHECK_INTERVAL_MINUTES}min")
     add_log("INFO", f"Bot iniciado. Canal: {TELEGRAM_CHANNEL}")

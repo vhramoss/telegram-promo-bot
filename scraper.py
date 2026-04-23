@@ -24,13 +24,13 @@ RSS_FEEDS = [
         "emoji": "💥",
     },
     {
-        "name": "r/ofertasdobrasil",
-        "url": "https://www.reddit.com/r/ofertasdobrasil/new.rss",
+        "name": "r/ConsumoBR",
+        "url": "https://www.reddit.com/r/ConsumoBR/new.rss",
         "emoji": "🛒",
     },
     {
-        "name": "r/eu_opshopping",
-        "url": "https://www.reddit.com/r/eu_opshopping/new.rss",
+        "name": "r/brasil",
+        "url": "https://www.reddit.com/r/brasil/search.rss?q=promoção&sort=new&restrict_sr=1",
         "emoji": "🎯",
     },
 ]

@@ -62,37 +62,38 @@ def generate_deal_id(url: str) -> str:
 
 
 
-# Sites de lojas aceitos — qualquer link que aponte pra esses domínios é produto real
-ALLOWED_DOMAINS = [
-    "amazon.com.br", "amzn.to",
-    "mercadolivre.com.br", "mercadolibre.com.br", "mlk.to",
-    "shopee.com.br",
-    "magalu.com.br", "magazineluiza.com.br",
-    "americanas.com.br",
-    "kabum.com.br",
-    "casasbahia.com.br",
-    "pontofrio.com.br",
-    "extra.com.br",
-    "netshoes.com.br",
-    "centauro.com.br",
-    "aliexpress.com",
-    "terabyteshop.com.br",
-    "pichau.com.br",
-    "submarino.com.br",
-    "carrefour.com.br",
-    "ifood.com.br",
+# Palavras no título que indicam que é um post de produto real
+# No Reddit de promoções, os posts seguem o padrão: [Loja] Produto - R$XX
+STORE_KEYWORDS = [
+    "amazon", "shopee", "magalu", "magazine luiza",
+    "mercado livre", "mercadolivre", "americanas",
+    "kabum", "casas bahia", "ponto frio", "extra",
+    "netshoes", "centauro", "aliexpress", "terabyte",
+    "pichau", "submarino", "carrefour", "ifood",
+    "samsung", "apple", "nike", "adidas",
 ]
 
 
-def is_product_link(url: str) -> bool:
+def is_real_deal(title: str) -> bool:
     """
-    Retorna True somente se a URL aponta para um site de loja conhecido.
-    Links do Reddit, blogs ou discussões são rejeitados.
+    Retorna True se o título do post mencionar uma loja ou tiver preço.
+    Posts do Reddit de promoção costumam ter formato: [Amazon] Produto - R$199
     """
-    if not url:
-        return False
-    url_lower = url.lower()
-    return any(domain in url_lower for domain in ALLOWED_DOMAINS)
+    title_lower = title.lower()
+
+    # Aceita se tiver preço explícito (R$)
+    if re.search(r"r\$\s*[\d.,]+", title_lower):
+        return True
+
+    # Aceita se mencionar nome de loja conhecida
+    if any(store in title_lower for store in STORE_KEYWORDS):
+        return True
+
+    # Aceita se tiver % de desconto
+    if re.search(r"\d+\s*%\s*(off|desc)", title_lower):
+        return True
+
+    return False
 
 
 def extract_price(text: str) -> Optional[str]:
@@ -170,8 +171,8 @@ async def fetch_feed(
             title = entry.get("title", "Sem título").strip()
             description = entry.get("summary", "")
 
-            # Só aceita se o link apontar pra um site de loja conhecido
-            if not is_product_link(url):
+            # Só aceita se o título indicar produto/loja real
+            if not is_real_deal(title):
                 continue
 
             deal = {

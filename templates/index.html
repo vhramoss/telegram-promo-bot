@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bot de Promoções — Dashboard</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0f13;
+      --surface:   #1a1a24;
+      --border:    #2a2a3a;
+      --accent:    #7c3aed;
+      --accent2:   #06b6d4;
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --yellow:    #f59e0b;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --radius:    12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 18px; font-weight: 700; }
+    header h1 span { color: var(--accent); }
+
+    #status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(34,197,94,0.15);
+      color: var(--green);
+      border: 1px solid rgba(34,197,94,0.3);
+    }
+    #status-badge.offline { background: rgba(239,68,68,0.15); color: var(--red); border-color: rgba(239,68,68,0.3); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{ opacity:1 } 50%{ opacity:.4 } }
+
+    .refresh-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all .2s;
+    }
+    .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Layout ──────────────────────────────────────────────── */
+    main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+    /* ── Info bar ────────────────────────────────────────────── */
+    .info-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .info-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .info-chip strong { color: var(--text); font-weight: 600; }
+
+    /* ── Cards de métricas ───────────────────────────────────── */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
+    .card-value { font-size: 32px; font-weight: 800; line-height: 1; }
+    .card-value.green  { color: var(--green); }
+    .card-value.purple { color: var(--accent); }
+    .card-value.cyan   { color: var(--accent2); }
+
+    /* ── Grid de painéis ─────────────────────────────────────── */
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) { .panels { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-header .count {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      background: rgba(255,255,255,.05);
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+    .panel-body { max-height: 420px; overflow-y: auto; }
+
+    /* ── Tabela de deals ─────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+    }
+    td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+
+    .source-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .tag-pelando       { background: rgba(239,68,68,.15);   color: #f87171; }
+    .tag-promobit      { background: rgba(245,158,11,.15);  color: #fbbf24; }
+    .tag-promocoes-nerd{ background: rgba(124,58,237,.15);  color: #a78bfa; }
+    .tag-cupom-valido  { background: rgba(6,182,212,.15);   color: #67e8f9; }
+    .tag-default       { background: rgba(100,116,139,.15); color: #94a3b8; }
+
+    .deal-title {
+      font-weight: 500;
+      max-width: 260px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .deal-title a { color: var(--text); text-decoration: none; }
+    .deal-title a:hover { color: var(--accent2); }
+
+    .price-badge {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      white-space: nowrap;
+    }
+
+    .time-str { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+    /* ── Logs ────────────────────────────────────────────────── */
+    .log-list { padding: 0; list-style: none; }
+    .log-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      font-size: 13px;
+      align-items: flex-start;
+    }
+    .log-item:last-child { border-bottom: none; }
+    .log-level {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      min-width: 52px;
+      text-align: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .level-INFO    { background: rgba(6,182,212,.15);   color: #67e8f9; }
+    .level-WARNING { background: rgba(245,158,11,.15);  color: #fbbf24; }
+    .level-ERROR   { background: rgba(239,68,68,.15);   color: #f87171; }
+    .log-msg { flex: 1; word-break: break-word; }
+    .log-time { color: var(--muted); font-size: 11px; flex-shrink: 0; }
+
+    /* ── Fontes: breakdown ───────────────────────────────────── */
+    .source-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+    .source-row:last-child { border-bottom: none; }
+    .source-bar-wrap { flex: 1; margin: 0 14px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .source-bar { height: 100%; background: var(--accent); border-radius: 3px; transition: width .6s ease; }
+    .source-count { font-size: 13px; font-weight: 700; color: var(--text); min-width: 32px; text-align: right; }
+
+    /* ── Scrollbar ───────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .empty-state { padding: 32px; text-align: center; color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- ══ HEADER ═══════════════════════════════════════════════════════════ -->
+<header>
+  <div class="header-left">
+    <span style="font-size:24px">🤖</span>
+    <h1>Bot de <span>Promoções</span></h1>
+    <div id="status-badge"><span class="dot"></span><span id="status-text">Carregando...</span></div>
+  </div>
+  <button class="refresh-btn" onclick="loadAll()">↺ Atualizar</button>
+</header>
+
+<!-- ══ MAIN ══════════════════════════════════════════════════════════════ -->
+<main>
+
+  <!-- INFO BAR -->
+  <div class="info-bar">
+    <div class="info-chip">📡 Canal: <strong id="info-channel">—</strong></div>
+    <div class="info-chip">⏱ Intervalo: <strong id="info-interval">—</strong></div>
+    <div class="info-chip">🕒 Próxima verificação: <strong id="info-next">—</strong></div>
+    <div class="info-chip">🚀 Online desde: <strong id="info-since">—</strong></div>
+  </div>
+
+  <!-- MÉTRICAS -->
+  <div class="metrics">
+    <div class="card">
+      <div class="card-label">Total de deals</div>
+      <div class="card-value purple" id="metric-total">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Postados hoje</div>
+      <div class="card-value green" id="metric-today">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Fontes ativas</div>
+      <div class="card-value cyan" id="metric-sources">—</div>
+    </div>
+  </div>
+
+  <!-- PAINÉIS -->
+  <div class="panels">
+
+    <!-- Deals recentes -->
+    <div class="panel" style="grid-column: span 2">
+      <div class="panel-header">
+        📦 Deals postados recentemente
+        <span class="count" id="deals-count">0 registros</span>
+      </div>
+      <div class="panel-body">
+        <table>
+          <thead>
+            <tr>
+              <th>Fonte</th>
+              <th>Título</th>
+              <th>Preço</th>
+              <th>Postado em</th>
+            </tr>
+          </thead>
+          <tbody id="deals-tbody">
+            <tr><td colspan="4" class="empty-state">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Breakdown por fonte -->
+    <div class="panel">
+      <div class="panel-header">📊 Deals por fonte</div>
+      <div class="panel-body" id="sources-list">
+        <div class="empty-state">Carregando...</div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="panel">
+      <div class="panel-header">
+        🗒 Logs do sistema
+        <span class="count" id="logs-count">0 registros</span>
+      </div>
+      <div class="panel-body">
+        <ul class="log-list" id="logs-list">
+          <li class="empty-state">Carregando...</li>
+        </ul>
+      </div>
+    </div>
+
+  </div><!-- /panels -->
+</main>
+
+<script>
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+/** Formata ISO datetime para horário local legível */
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+/** Conta tempo até a data */
+function timeUntil(iso) {
+  if (!iso) return '—';
+  const diff = Math.max(0, new Date(iso) - Date.now());
+  const min = Math.floor(diff / 60000);
+  const sec = Math.floor((diff % 60000) / 1000);
+  return min > 0 ? `${min}m ${sec}s` : `${sec}s`;
+}
+
+/** Retorna classe CSS de cor para a fonte */
+function sourceClass(source) {
+  const map = {
+    'pelando':        'tag-pelando',
+    'promobit':       'tag-promobit',
+    'promocoes nerd': 'tag-promocoes-nerd',
+    'cupom valido':   'tag-cupom-valido',
+  };
+  return map[(source || '').toLowerCase()] || 'tag-default';
+}
+
+// ─── FETCH & RENDER ───────────────────────────────────────────────────────────
+
+async function loadStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+
+    const badge = document.getElementById('status-badge');
+    const txt   = document.getElementById('status-text');
+    if (d.running) {
+      badge.className = '';
+      txt.textContent = 'Online';
+    } else {
+      badge.className = 'offline';
+      txt.textContent = 'Offline';
+    }
+
+    document.getElementById('info-channel').textContent  = d.channel || '—';
+    document.getElementById('info-interval').textContent = d.interval_minutes ? `${d.interval_minutes} min` : '—';
+    document.getElementById('info-next').textContent     = d.next_check ? timeUntil(d.next_check) : '—';
+    document.getElementById('info-since').textContent    = fmtDate(d.started_at);
+  } catch (e) {
+    document.getElementById('status-text').textContent = 'Erro';
+    document.getElementById('status-badge').className  = 'offline';
+  }
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch('/api/stats');
+    const d = await r.json();
+    document.getElementById('metric-total').textContent   = d.total   ?? '—';
+    document.getElementById('metric-today').textContent   = d.today   ?? '—';
+    document.getElementById('metric-sources').textContent = (d.by_source || []).length;
+
+    // Breakdown por fonte
+    const list = document.getElementById('sources-list');
+    if (!d.by_source || d.by_source.length === 0) {
+      list.innerHTML = '<div class="empty-state">Sem dados ainda.</div>';
+      return;
+    }
+    const max = Math.max(...d.by_source.map(s => s.count));
+    list.innerHTML = d.by_source.map(s => `
+      <div class="source-row">
+        <span class="source-tag ${sourceClass(s.source)}">${s.source}</span>
+        <div class="source-bar-wrap">
+          <div class="source-bar" style="width:${Math.round((s.count/max)*100)}%"></div>
+        </div>
+        <span class="source-count">${s.count}</span>
+      </div>
+    `).join('');
+  } catch(e) {}
+}
+
+async function loadDeals() {
+  try {
+    const r = await fetch('/api/deals');
+    const deals = await r.json();
+    const tbody = document.getElementById('deals-tbody');
+    document.getElementById('deals-count').textContent = `${deals.length} registros`;
+
+    if (!deals.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Nenhum deal postado ainda.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = deals.map(d => `
+      <tr>
+        <td><span class="source-tag ${sourceClass(d.source)}">${d.source}</span></td>
+        <td class="deal-title"><a href="${d.url}" target="_blank" title="${d.title}">${d.title}</a></td>
+        <td><span class="price-badge">${d.price || '—'}</span></td>
+        <td class="time-str">${fmtDate(d.posted_at)}</td>
+      </tr>
+    `).join('');
+  } catch(e) {}
+}
+
+async function loadLogs() {
+  try {
+    const r = await fetch('/api/logs');
+    const logs = await r.json();
+    const list = document.getElementById('logs-list');
+    document.getElementById('logs-count').textContent = `${logs.length} registros`;
+
+    if (!logs.length) {
+      list.innerHTML = '<li class="empty-state">Sem logs ainda.</li>';
+      return;
+    }
+    list.innerHTML = logs.map(l => `
+      <li class="log-item">
+        <span class="log-level level-${l.level}">${l.level}</span>
+        <span class="log-msg">${l.message}</span>
+        <span class="log-time">${fmtDate(l.created_at)}</span>
+      </li>
+    `).join('');
+  } catch(e) {}
+}
+
+async function loadAll() {
+  await Promise.all([loadStatus(), loadStats(), loadDeals(), loadLogs()]);
+}
+
+// Carrega na abertura + atualiza o "próxima verificação" a cada segundo
+loadAll();
+setInterval(loadStatus, 1000);       // atualiza contador regressivo
+setInterval(loadAll, 30_000);        // reload completo a cada 30s
+</script>
+</body>
+</html>
